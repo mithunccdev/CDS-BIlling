@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "8000:80"
+    expose:
+      - 80
     environment:
       APP_NAME: "MS ERP"
       APP_ENV: production
