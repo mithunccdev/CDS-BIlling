@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+@import '@fontsource/plus-jakarta-sans/300.css';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/plus-jakarta-sans/800.css';
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-alpine.css';
+@import 'quill/dist/quill.snow.css';
+@import './brutalism.css';
+@import './skeuomorphism.css';
+@import './neomorphism.css';
+@import './maximalist.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Quill WYSIWYG Editor Image Containment & Layout */
+.ql-editor img {
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.ql-editor {
+    min-height: 180px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.ql-container.ql-snow {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.ql-toolbar.ql-snow {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    background-color: #f8fafc;
+}
+
+/* Compact Density Layout Overrides */
+[data-density="compact"] {
+    --ag-grid-size: 3px;
+}
+
+[data-density="compact"] body {
+    font-size: 0.82rem;
+}
+
+[data-density="compact"] .card {
+    margin-bottom: 0.85rem !important;
+}
+
+[data-density="compact"] .card-header,
+[data-density="compact"] .card-body,
+[data-density="compact"] .card-footer {
+    padding: 0.6rem 0.85rem !important;
+}
+
+[data-density="compact"] .table td,
+[data-density="compact"] .table th {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.8rem !important;
+}
+
+[data-density="compact"] .btn-sm {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.75rem !important;
+}
+
+[data-density="compact"] .form-control-sm,
+[data-density="compact"] .form-select-sm {
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.78rem !important;
+}
+
+[data-density="compact"] #topbar {
+    height: 50px !important;
+}
+
+[data-density="compact"] .sidebar-brand {
+    height: 50px !important;
+}
+
+
