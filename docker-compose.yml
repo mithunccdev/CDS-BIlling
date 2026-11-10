@@ -20,6 +20,7 @@ services:
       DB_DATABASE: ${DB_DATABASE:-mserp}
       DB_USERNAME: ${DB_USERNAME:-mserp_user}
       DB_PASSWORD: ${DB_PASSWORD:-mserp_password}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
       SESSION_DRIVER: redis
       CACHE_STORE: redis
       QUEUE_CONNECTION: redis

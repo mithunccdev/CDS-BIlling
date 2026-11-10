@@ -22,18 +22,12 @@ if [ ! -L /var/www/html/public/storage ]; then
     php artisan storage:link || true
 fi
 
-# Run Database Migrations and Seeds if enabled
+# Run Database Self-Healing, Migrations and Seeds if enabled
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
-    echo "⚙ Waiting for database connection at ${DB_HOST:-mysql}:${DB_PORT:-3306}..."
-    max_tries=30
-    count=0
-    until php -r "try { new PDO('mysql:host=' . (getenv('DB_HOST') ?: 'mysql') . ';port=' . (getenv('DB_PORT') ?: '3306'), getenv('DB_USERNAME'), getenv('DB_PASSWORD')); exit(0); } catch (Exception \$e) { exit(1); }" 2>/dev/null || [ "$count" -ge "$max_tries" ]; do
-        sleep 2
-        count=$((count + 1))
-        echo "⏳ Waiting for MySQL to be ready ($count/$max_tries)..."
-    done
+    echo "⚙ Running database connection check and self-healing..."
+    php /var/www/html/docker/heal-db.php || echo "⚠ Database heal script encountered an issue. Proceeding with migration..."
 
-    echo "✔ Database connected! Running migrations..."
+    echo "⚙ Running migrations..."
     php artisan migrate --force || echo "⚠ Warning: Database migration failed."
 
     if [ "${SEED_DATABASE:-false}" = "true" ]; then
