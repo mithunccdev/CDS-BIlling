@@ -106,24 +106,79 @@ class DatabaseSeeder extends Seeder
             $roleIds[$slug] = $roleId;
         }
 
-        // 5. Primary Administrator Account (Idempotent - no sample users)
-        $password = Hash::make('password');
-        $cfoId = DB::table('users')->where('email', 'admin@mserp.com')->value('id');
-        if (!$cfoId) {
-            $cfoId = DB::table('users')->insertGetId([
-                'name' => 'Super Admin',
-                'email' => 'admin@mserp.com',
-                'password' => $password,
-                'role_id' => $roleIds['super-admin'],
-                'company_id' => $companyId,
-                'branch_id' => $headBranchId,
-                'department_id' => $deptIds['EXEC'],
-                'reports_to_id' => null,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        // 5. User Accounts — one per role (Idempotent, production-ready, no demo data)
+        // Passwords use bcrypt; update via Settings → User Management after first login.
+        $users = [
+            [
+                'name'          => 'Super Admin',
+                'email'         => 'admin@mserp.com',
+                'password'      => Hash::make('Admin@Mserp#2026'),
+                'role_slug'     => 'super-admin',
+                'dept_code'     => 'EXEC',
+            ],
+            [
+                'name'          => 'System Admin',
+                'email'         => 'sysadmin@mserp.com',
+                'password'      => Hash::make('SysAdm!n@7742'),
+                'role_slug'     => 'admin',
+                'dept_code'     => 'EXEC',
+            ],
+            [
+                'name'          => 'Sales Head',
+                'email'         => 'saleshead@mserp.com',
+                'password'      => Hash::make('SlsHd@Erp#5519'),
+                'role_slug'     => 'sales-head',
+                'dept_code'     => 'SALES',
+            ],
+            [
+                'name'          => 'Sales Executive',
+                'email'         => 'salesexec@mserp.com',
+                'password'      => Hash::make('SlsEx@Erp#3384'),
+                'role_slug'     => 'sales-rep',
+                'dept_code'     => 'SALES',
+            ],
+            [
+                'name'          => 'Accounts Head',
+                'email'         => 'accountshead@mserp.com',
+                'password'      => Hash::make('AccHd@Erp#8821'),
+                'role_slug'     => 'accounts-head',
+                'dept_code'     => 'ACCTS',
+            ],
+            [
+                'name'          => 'Accounts Staff',
+                'email'         => 'accountsstaff@mserp.com',
+                'password'      => Hash::make('AccSt@Erp#6673'),
+                'role_slug'     => 'accounts-member',
+                'dept_code'     => 'ACCTS',
+            ],
+            [
+                'name'          => 'Staff User',
+                'email'         => 'staff@mserp.com',
+                'password'      => Hash::make('Staff@Erp#1145'),
+                'role_slug'     => 'user',
+                'dept_code'     => 'HR',
+            ],
+        ];
+
+        foreach ($users as $u) {
+            $exists = DB::table('users')->where('email', $u['email'])->exists();
+            if (!$exists) {
+                DB::table('users')->insert([
+                    'name'          => $u['name'],
+                    'email'         => $u['email'],
+                    'password'      => $u['password'],
+                    'role_id'       => $roleIds[$u['role_slug']],
+                    'company_id'    => $companyId,
+                    'branch_id'     => $headBranchId,
+                    'department_id' => $deptIds[$u['dept_code']],
+                    'reports_to_id' => null,
+                    'is_active'     => true,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+            }
         }
+        $cfoId = DB::table('users')->where('email', 'admin@mserp.com')->value('id');
 
         // 6. Navigation Modules (Low-Code Sidebar - seeded once when pages are missing)
         if (!DB::table('pages')->where('slug', 'customers')->exists()) {

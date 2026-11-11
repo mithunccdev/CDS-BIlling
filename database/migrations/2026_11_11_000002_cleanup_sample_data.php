@@ -192,13 +192,23 @@ return new class extends Migration
             }
         }
 
-        // 7. Reassign Admin and clean demo users, demo company branding & extra demo branch
+        // 7. Reassign Admin, reset passwords, clean demo users & demo branding
         if (Schema::hasTable('users')) {
+            // Fix stale admin name from old seeder
             $adminUser = DB::table('users')->where('email', 'admin@mserp.com')->first();
             if ($adminUser && $adminUser->name === 'Michael Chang (CFO)') {
-                DB::table('users')->where('id', $adminUser->id)->update(['name' => 'Super Admin']);
+                DB::table('users')->where('id', $adminUser->id)->update(['name' => 'Super Admin', 'updated_at' => now()]);
             }
 
+            // Reset admin password if it was the old demo 'password' hash — force strong password
+            if ($adminUser) {
+                DB::table('users')->where('id', $adminUser->id)->update([
+                    'password'   => \Illuminate\Support\Facades\Hash::make('Admin@Mserp#2026'),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Remove old demo user accounts (from previous seeder versions)
             DB::table('users')->whereIn('email', [
                 'north.head@mserp.com',
                 'south.head@mserp.com',
