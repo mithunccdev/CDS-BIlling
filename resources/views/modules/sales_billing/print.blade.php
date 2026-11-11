@@ -262,19 +262,19 @@
             <table class="table table-sm table-borderless mb-0">
                 <tr>
                     <td class="text-muted p-0" style="width: 35%;">Bank Name:</td>
-                    <td class="fw-semibold text-dark p-0">{{ $company->bank_name ?? 'HDFC Bank Ltd' }}</td>
+                    <td class="fw-semibold text-dark p-0">{{ $company?->bank_name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="text-muted p-0">Account Number:</td>
-                    <td class="fw-semibold text-dark p-0">{{ $company->bank_acc_no ?? '50100203495834' }}</td>
+                    <td class="fw-semibold text-dark p-0">{{ $company?->bank_acc_no ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="text-muted p-0">IFSC Code:</td>
-                    <td class="fw-semibold text-dark p-0">{{ $company->bank_ifsc ?? 'HDFC0000060' }}</td>
+                    <td class="fw-semibold text-dark p-0">{{ $company?->bank_ifsc ?? 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="text-muted p-0">PAN Number:</td>
-                    <td class="fw-semibold text-dark p-0">{{ $company->pan ?? 'AAACA1234A' }}</td>
+                    <td class="fw-semibold text-dark p-0">{{ $company?->pan ?? 'N/A' }}</td>
                 </tr>
             </table>
 
@@ -282,17 +282,17 @@
             <ol class="text-muted ps-3 mb-0" style="font-size: 10px;">
                 <li>Payment must be completed within the specified due date.</li>
                 <li>Interest @ 18% p.a. will be charged for delayed payments.</li>
-                <li>All disputes are subject to Mumbai Jurisdiction.</li>
+                <li>All disputes are subject to local jurisdiction.</li>
             </ol>
         </div>
 
         <div class="col-sm-5 d-flex flex-column justify-content-between align-items-end text-end">
             <div>
-                <!-- If Purchase, signed on behalf of Vendor. If Sales, signed on behalf of Acme -->
+                <!-- Signed on behalf of Buyer (Purchase) or Company (Sales) -->
                 @if(in_array($docType, ['purchase-orders', 'purchase-invoices']))
-                    <div class="text-muted small">For <strong>{{ $contact->name }}</strong></div>
+                    <div class="text-muted small">For <strong>{{ $contact->name ?? 'Vendor' }}</strong></div>
                 @else
-                    <div class="text-muted small">For <strong>{{ $company->name }}</strong></div>
+                    <div class="text-muted small">For <strong>{{ $company->name ?? 'Authorized Company' }}</strong></div>
                 @endif
                 <br><br><br>
             </div>

@@ -127,18 +127,23 @@
                 <!-- Right: Seller entity info & totals summary -->
                 <div class="col-lg-4">
                     <!-- Seller Details Card -->
+                    @php
+                        $billingCompany = \Illuminate\Support\Facades\Schema::hasTable('companies')
+                            ? \Illuminate\Support\Facades\DB::table('companies')->first()
+                            : null;
+                    @endphp
                     <div class="card billing-card border-0 shadow-sm p-4 mb-4" style="background-color: #fafbfc;">
                         <h6 class="fw-bold text-dark text-uppercase small tracking-wider mb-3" id="sender-header-title">Billing From (Seller)</h6>
                         <div class="small">
-                            <div class="fw-bold text-primary mb-1">Acme Corporation (India)</div>
-                            <div class="text-muted mb-2">Express Towers, Nariman Point, Mumbai, MH</div>
+                            <div class="fw-bold text-primary mb-1">{{ $billingCompany?->name ?? 'Company Profile Not Configured' }}</div>
+                            <div class="text-muted mb-2">{{ $billingCompany?->address ?? '-' }}</div>
                             <div class="row g-1 mb-1">
                                 <div class="col-4 text-muted fw-medium">GSTIN:</div>
-                                <div class="col-8 fw-semibold" id="company-gstin-display">27AAACA1234A1Z5</div>
+                                <div class="col-8 fw-semibold" id="company-gstin-display">{{ $billingCompany?->gstin ?? '-' }}</div>
                             </div>
                             <div class="row g-1">
                                 <div class="col-4 text-muted fw-medium">State:</div>
-                                <div class="col-8 fw-semibold" id="company-state-display">Maharashtra (Code: 27)</div>
+                                <div class="col-8 fw-semibold" id="company-state-display">{{ $billingCompany?->state ?? '-' }}</div>
                             </div>
                         </div>
                     </div>

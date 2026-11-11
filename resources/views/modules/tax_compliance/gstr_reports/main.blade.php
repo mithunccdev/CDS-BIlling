@@ -1,18 +1,27 @@
 @php
-    $salesTax = DB::table('sales_invoices')->sum('tax');
-    $salesAmount = DB::table('sales_invoices')->sum('total_amount');
+    $salesTax = \Illuminate\Support\Facades\Schema::hasTable('sales_invoices')
+        ? (float) DB::table('sales_invoices')->sum('tax')
+        : 0.0;
+    $salesAmount = \Illuminate\Support\Facades\Schema::hasTable('sales_invoices')
+        ? (float) DB::table('sales_invoices')->sum('total_amount')
+        : 0.0;
     $cgst = $salesTax / 2;
     $sgst = $salesTax / 2;
+
+    $purchaseTax = \Illuminate\Support\Facades\Schema::hasTable('purchase_orders')
+        ? (float) DB::table('purchase_orders')->sum('tax_amount')
+        : 0.0;
+    $netCashPayable = max(0.0, $salesTax - $purchaseTax);
 @endphp
 
 <div class="p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="fw-bold mb-1"><i class="bi bi-file-earmark-bar-graph me-2 text-primary"></i>GSTR-1 & GSTR-3B Tax Return Summary</h4>
-            <p class="text-muted small mb-0">Monthly GSTR-1 outward sales tax summary & GSTR-3B Tax Liability vs ITC Reconciliation</p>
+            <p class="text-muted small mb-0">Monthly GSTR-1 outward sales tax summary & GSTR-3B Tax Liability vs Input Tax Credit (ITC)</p>
         </div>
         <button class="btn btn-primary rounded-pill shadow-sm" onclick="window.print()">
-            <i class="bi bi-printer me-1"></i> Export GSTR JSON
+            <i class="bi bi-printer me-1"></i> Print Summary
         </button>
     </div>
 
@@ -26,7 +35,7 @@
                         <tbody>
                             <tr>
                                 <td>Total Taxable Turnover</td>
-                                <td class="text-end font-monospace fw-bold">₹{{ number_format($salesAmount - $salesTax, 2) }}</td>
+                                <td class="text-end font-monospace fw-bold">₹{{ number_format(max(0.0, $salesAmount - $salesTax), 2) }}</td>
                             </tr>
                             <tr>
                                 <td>Output CGST Collected</td>
@@ -58,12 +67,12 @@
                                 <td class="text-end font-monospace text-danger">₹{{ number_format($salesTax, 2) }}</td>
                             </tr>
                             <tr>
-                                <td>Eligible Input Tax Credit (ITC 2B)</td>
-                                <td class="text-end font-monospace text-success">- ₹{{ number_format($salesTax * 0.75, 2) }}</td>
+                                <td>Recorded Purchase Tax (Eligible ITC)</td>
+                                <td class="text-end font-monospace text-success">- ₹{{ number_format($purchaseTax, 2) }}</td>
                             </tr>
                             <tr class="fw-bold border-top table-warning">
-                                <td>NET CASH TAX PAYABLE (E-CASH LEDGER)</td>
-                                <td class="text-end font-monospace text-dark">₹{{ number_format($salesTax * 0.25, 2) }}</td>
+                                <td>NET CASH TAX PAYABLE</td>
+                                <td class="text-end font-monospace text-dark">₹{{ number_format($netCashPayable, 2) }}</td>
                             </tr>
                         </tbody>
                     </table>

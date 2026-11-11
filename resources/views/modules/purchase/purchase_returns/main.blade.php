@@ -1,12 +1,21 @@
+@php
+    $returns = \Illuminate\Support\Facades\Schema::hasTable('credit_debit_notes')
+        ? DB::table('credit_debit_notes as cdn')
+            ->leftJoin('vendors as v', 'cdn.party_id', '=', 'v.id')
+            ->where('cdn.party_type', 'Vendor')
+            ->where('cdn.note_type', 'Debit Note')
+            ->select('cdn.*', 'v.name as vendor_name')
+            ->orderByDesc('cdn.id')
+            ->get()
+        : collect();
+@endphp
+
 <div class="p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-bold mb-1"><i class="bi bi-arrow-counterclockwise me-2 text-primary"></i>Purchase Returns & Vendor Payments</h4>
-            <p class="text-muted small mb-0">Record rejected goods returns to suppliers and vendor payment vouchers</p>
+            <h4 class="fw-bold mb-1"><i class="bi bi-arrow-counterclockwise me-2 text-primary"></i>Purchase Returns & Vendor Debit Notes</h4>
+            <p class="text-muted small mb-0">Track rejected goods returns to suppliers and vendor debit note adjustments</p>
         </div>
-        <button class="btn btn-primary rounded-pill shadow-sm" onclick="alert('Creating Purchase Return Note...')">
-            <i class="bi bi-plus-circle me-1"></i> New Purchase Return
-        </button>
     </div>
 
     <div class="card border-0 shadow-sm rounded-3">
@@ -15,23 +24,39 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4">Return No</th>
+                            <th class="ps-4">Return / Note No</th>
                             <th>Vendor Name</th>
-                            <th>Return Date</th>
-                            <th>Reason / Inspection Note</th>
-                            <th class="text-end">Total Refund / Debit Value (₹)</th>
+                            <th>Reference Bill</th>
+                            <th>Reason / Note</th>
+                            <th class="text-end">Total Debit Value (₹)</th>
                             <th class="text-center pe-4">Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="ps-4 font-monospace fw-bold text-primary">PR-2026-001</td>
-                            <td class="fw-semibold">Cisco Systems India Pvt Ltd</td>
-                            <td>2026-08-10</td>
-                            <td>Damaged ethernet ports on switch shipment</td>
-                            <td class="text-end font-monospace fw-bold text-danger">₹125,000.00</td>
-                            <td class="text-center pe-4"><span class="badge bg-success-subtle text-success rounded-pill px-3 py-1">Debit Note Issued</span></td>
-                        </tr>
+                        @forelse($returns as $ret)
+                            @php
+                                $badgeClass = match($ret->status) {
+                                    'Issued', 'Approved', 'Posted' => 'bg-success-subtle text-success',
+                                    'Cancelled' => 'bg-danger-subtle text-danger',
+                                    default => 'bg-secondary-subtle text-secondary',
+                                };
+                            @endphp
+                            <tr>
+                                <td class="ps-4 font-monospace fw-bold text-primary">{{ $ret->note_no }}</td>
+                                <td class="fw-semibold">{{ $ret->vendor_name ?? ('Vendor #' . $ret->party_id) }}</td>
+                                <td class="font-monospace">{{ $ret->reference_invoice_no ?? '-' }}</td>
+                                <td>{{ $ret->reason ?? '-' }}</td>
+                                <td class="text-end font-monospace fw-bold text-danger">₹{{ number_format((float)$ret->total_amount, 2) }}</td>
+                                <td class="text-center pe-4"><span class="badge {{ $badgeClass }} rounded-pill px-3 py-1">{{ $ret->status }}</span></td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-arrow-counterclockwise fs-3 d-block mb-2 opacity-50"></i>
+                                    No purchase returns or vendor debit notes recorded yet.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

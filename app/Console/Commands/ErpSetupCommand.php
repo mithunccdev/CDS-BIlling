@@ -143,7 +143,7 @@ class ErpSetupCommand extends Command
         }
 
         // Step 5: Run Migrations and Seeders
-        $this->info("⚙ Running database migrations & seeding dynamic ERP metadata and demo records...");
+        $this->info("⚙ Running database migrations & seeding dynamic ERP metadata...");
         $this->call('migrate:fresh', [
             '--force' => true,
             '--seed' => true,
@@ -152,20 +152,15 @@ class ErpSetupCommand extends Command
         // Step 6: Render Setup Complete Dashboard & Login Credentials
         $this->newLine();
         $this->info("========================================================================");
-        $this->info("🎉 ERP INSTALLED & READY TO USE - FULLY PROVISIONED & SEEDED 🎉");
+        $this->info("🎉 ERP INSTALLED & READY TO USE - CLEAN WORKSPACE PROVISIONED 🎉");
         $this->info("========================================================================");
         $this->newLine();
 
-        $this->line("<fg=cyan;options=bold>DEMO ACCOUNTS SEEDED (Password for all: password):</>");
+        $this->line("<fg=cyan;options=bold>ADMINISTRATOR ACCOUNT SEEDED (Password: password):</>");
         $this->table(
             ['Role Title', 'Email Address', 'Security Scope / Access'],
             [
-                ['🛡️ CFO / Super Admin', 'admin@mserp.com', 'Unrestricted System Access'],
-                ['📈 North Sales Head', 'north.head@mserp.com', 'Department Supervisor'],
-                ['💰 Finance Head', 'accounts.head@mserp.com', 'Accounts Ledger & Approvals'],
-                ['💼 Sales Representative', 'rep.north1@mserp.com', 'Quotations & Invoices'],
-                ['📝 Accounts Member', 'accounts.member@mserp.com', 'Billing & Receipt Approvals'],
-                ['👤 General User', 'user@mserp.com', 'Workspace Read-only']
+                ['🛡️ Super Admin', 'admin@mserp.com', 'Unrestricted System Access']
             ]
         );
 

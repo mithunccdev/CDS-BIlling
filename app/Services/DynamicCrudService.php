@@ -24,16 +24,20 @@ class DynamicCrudService
      */
     public function getPageConfig(string $slug)
     {
-        return ErpCacheService::rememberSafe(
+        $cached = ErpCacheService::rememberSafe(
             ErpCacheService::getPageConfigKey($slug),
             86400,
             function () use ($slug) {
-                return DB::table('pages')
+                $page = DB::table('pages')
                     ->where('slug', $slug)
                     ->where('is_active', true)
                     ->first();
+
+                return $page ? (array) $page : null;
             }
         );
+
+        return is_array($cached) ? (object) $cached : $cached;
     }
 
     /**

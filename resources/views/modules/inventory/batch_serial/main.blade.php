@@ -51,8 +51,8 @@
                                 <tr>
                                     <td class="ps-4 font-monospace fw-bold text-primary">{{ $b->batch_no }}</td>
                                     <td><span class="font-monospace text-muted">{{ $b->item_code }}</span> - {{ $b->item_name }}</td>
-                                    <td>{{ $b->manufacture_date ?? '2026-01-01' }}</td>
-                                    <td><span class="badge bg-warning-subtle text-dark">{{ $b->expiry_date ?? '2028-12-31' }}</span></td>
+                                    <td>{{ $b->manufacture_date ?? 'N/A' }}</td>
+                                    <td><span class="badge bg-warning-subtle text-dark">{{ $b->expiry_date ?? 'N/A' }}</span></td>
                                     <td class="text-end font-monospace fw-bold pe-4">{{ $b->qty_on_hand }}</td>
                                 </tr>
                             @empty

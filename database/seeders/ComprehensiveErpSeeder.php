@@ -10,44 +10,45 @@ class ComprehensiveErpSeeder extends Seeder
 {
     public function run(): void
     {
-        $acmeCompany = DB::table('companies')->first();
-        if (!$acmeCompany) {
+        $defaultCompany = DB::table('companies')->first();
+        if (!$defaultCompany) {
             $companyId = DB::table('companies')->insertGetId([
-                'name' => 'ACME Enterprises Pvt Ltd',
-                'code' => 'ACME',
+                'name' => 'MS ERP',
+                'code' => 'MSERP',
                 'created_at' => now(),
                 'updated_at' => now()
             ]);
         } else {
-            $companyId = $acmeCompany->id;
+            $companyId = $defaultCompany->id;
         }
         $branch = DB::table('branches')->where('company_id', $companyId)->first();
         $branchId = $branch ? $branch->id : null;
 
-        // 1. Chart of Accounts Seeding
+        // 1. Chart of Accounts Seeding (Clean framework with zero opening/current balances)
         $accounts = [
-            ['code' => '1010', 'name' => 'Cash in Hand', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 150000.00, 'current_balance' => 150000.00],
-            ['code' => '1020', 'name' => 'HDFC Bank Operating Account', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 2450000.00, 'current_balance' => 2450000.00],
-            ['code' => '1030', 'name' => 'Accounts Receivable (Trade Debtors)', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 850000.00, 'current_balance' => 850000.00],
-            ['code' => '1040', 'name' => 'Finished Goods Inventory Valuation', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 1200000.00, 'current_balance' => 1200000.00],
-            ['code' => '2010', 'name' => 'Accounts Payable (Trade Creditors)', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 620000.00, 'current_balance' => 620000.00],
-            ['code' => '2020', 'name' => 'Output CGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 45000.00, 'current_balance' => 45000.00],
-            ['code' => '2021', 'name' => 'Output SGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 45000.00, 'current_balance' => 45000.00],
-            ['code' => '2022', 'name' => 'Output IGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 90000.00, 'current_balance' => 90000.00],
-            ['code' => '3010', 'name' => 'Share Capital', 'type' => 'Equity', 'parent_id' => null, 'opening_balance' => 3000000.00, 'current_balance' => 3000000.00],
-            ['code' => '3020', 'name' => 'Retained Earnings', 'type' => 'Equity', 'parent_id' => null, 'opening_balance' => 1030000.00, 'current_balance' => 1030000.00],
-            ['code' => '4010', 'name' => 'Domestic Product Sales Revenue', 'type' => 'Income', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 3400000.00],
-            ['code' => '4020', 'name' => 'Service & Maintenance Income', 'type' => 'Income', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 450000.00],
-            ['code' => '5010', 'name' => 'Cost of Goods Sold (COGS)', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 1800000.00],
-            ['code' => '5020', 'name' => 'Salaries & Staff Expenses', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 650000.00],
-            ['code' => '5030', 'name' => 'Office Rent & Utilities', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 180000.00]
+            ['code' => '1010', 'name' => 'Cash in Hand', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '1020', 'name' => 'Primary Bank Operating Account', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '1030', 'name' => 'Accounts Receivable (Trade Debtors)', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '1040', 'name' => 'Finished Goods Inventory Valuation', 'type' => 'Asset', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '2010', 'name' => 'Accounts Payable (Trade Creditors)', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '2020', 'name' => 'Output CGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '2021', 'name' => 'Output SGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '2022', 'name' => 'Output IGST Payable', 'type' => 'Liability', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '3010', 'name' => 'Share Capital', 'type' => 'Equity', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '3020', 'name' => 'Retained Earnings', 'type' => 'Equity', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '4010', 'name' => 'Domestic Product Sales Revenue', 'type' => 'Income', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '4020', 'name' => 'Service & Maintenance Income', 'type' => 'Income', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '5010', 'name' => 'Cost of Goods Sold (COGS)', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '5020', 'name' => 'Salaries & Staff Expenses', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00],
+            ['code' => '5030', 'name' => 'Office Rent & Utilities', 'type' => 'Expense', 'parent_id' => null, 'opening_balance' => 0.00, 'current_balance' => 0.00]
         ];
 
         foreach ($accounts as $acc) {
-            DB::table('chart_of_accounts')->updateOrInsert(
-                ['code' => $acc['code']],
-                array_merge($acc, ['company_id' => $companyId, 'created_at' => now(), 'updated_at' => now()])
-            );
+            if (!DB::table('chart_of_accounts')->where('code', $acc['code'])->exists()) {
+                DB::table('chart_of_accounts')->insert(
+                    array_merge($acc, ['company_id' => $companyId, 'created_at' => now(), 'updated_at' => now()])
+                );
+            }
         }
 
         // 2. Fiscal Periods
@@ -65,51 +66,7 @@ class ComprehensiveErpSeeder extends Seeder
             );
         }
 
-        // 3. Warehouses & Bins
-        $whMainId = DB::table('warehouses')->where('code', 'WH-MUM-MAIN')->value('id');
-        if (!$whMainId) {
-            $whMainId = DB::table('warehouses')->insertGetId([
-                'company_id' => $companyId,
-                'branch_id' => $branchId,
-                'name' => 'Mumbai Central Warehouse',
-                'code' => 'WH-MUM-MAIN',
-                'address' => 'Bhiwandi Logistics Park, Sector 4, Thane, MH',
-                'manager_name' => 'Ramesh Patil',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-
-        $whBlrId = DB::table('warehouses')->where('code', 'WH-BLR-TECH')->value('id');
-        if (!$whBlrId) {
-            $whBlrId = DB::table('warehouses')->insertGetId([
-                'company_id' => $companyId,
-                'branch_id' => $branchId,
-                'name' => 'Bengaluru Distribution Center',
-                'code' => 'WH-BLR-TECH',
-                'address' => 'Peenya Industrial Area, Bengaluru, KA',
-                'manager_name' => 'Srinivas Gowda',
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-
-        // Bins
-        $bins = [
-            ['warehouse_id' => $whMainId, 'bin_code' => 'BIN-A1-01', 'aisle' => 'Aisle 1', 'rack' => 'Rack A', 'shelf' => 'Shelf 1'],
-            ['warehouse_id' => $whMainId, 'bin_code' => 'BIN-A1-02', 'aisle' => 'Aisle 1', 'rack' => 'Rack A', 'shelf' => 'Shelf 2'],
-            ['warehouse_id' => $whBlrId, 'bin_code' => 'BIN-B2-01', 'aisle' => 'Aisle 2', 'rack' => 'Rack B', 'shelf' => 'Shelf 1']
-        ];
-        foreach ($bins as $b) {
-            DB::table('warehouse_bins')->updateOrInsert(
-                ['warehouse_id' => $b['warehouse_id'], 'bin_code' => $b['bin_code']],
-                array_merge($b, ['created_at' => now(), 'updated_at' => now()])
-            );
-        }
-
-        // 4. HSN / SAC Codes
+        // 3. HSN / SAC Codes
         $hsns = [
             ['code' => '84713010', 'description' => 'Personal Computer Laptops & Workstations', 'type' => 'HSN', 'cgst_rate' => 9.00, 'sgst_rate' => 9.00, 'igst_rate' => 18.00],
             ['code' => '85176290', 'description' => 'Networking Routers & Enterprise Switches', 'type' => 'HSN', 'cgst_rate' => 9.00, 'sgst_rate' => 9.00, 'igst_rate' => 18.00],
@@ -122,57 +79,7 @@ class ComprehensiveErpSeeder extends Seeder
             );
         }
 
-        // 5. Work Centers & BOMs
-        $wcId = DB::table('work_centers')->where('code', 'WC-ASSY-01')->value('id');
-        if (!$wcId) {
-            $wcId = DB::table('work_centers')->insertGetId([
-                'company_id' => $companyId,
-                'name' => 'Main Electronics Assembly Line',
-                'code' => 'WC-ASSY-01',
-                'capacity_per_day' => 16,
-                'hourly_cost' => 750.00,
-                'labor_cost' => 350.00,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-
-        // Items check
-        $item1 = DB::table('inventory_items')->first();
-        if ($item1) {
-            $bomId = DB::table('boms')->where('bom_no', 'BOM-SERVER-001')->value('id');
-            if (!$bomId) {
-                $bomId = DB::table('boms')->insertGetId([
-                    'company_id' => $companyId,
-                    'bom_no' => 'BOM-SERVER-001',
-                    'item_id' => $item1->id,
-                    'qty' => 1,
-                    'total_cost' => 45000.00,
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Work Order
-            DB::table('work_orders')->updateOrInsert(
-                ['work_order_no' => 'WO-2026-0001'],
-                [
-                    'company_id' => $companyId,
-                    'bom_id' => $bomId,
-                    'item_id' => $item1->id,
-                    'qty' => 10,
-                    'start_date' => '2026-08-01',
-                    'completion_date' => '2026-08-25',
-                    'status' => 'In Progress',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            );
-        }
-
-        // 6. Numbering Series
+        // 4. Numbering Series
         $series = [
             ['module' => 'journal_entry', 'prefix' => 'JV/2026/', 'current_number' => 1001, 'padding' => 4],
             ['module' => 'sales_order', 'prefix' => 'SO/2026/', 'current_number' => 2001, 'padding' => 4],
@@ -180,6 +87,13 @@ class ComprehensiveErpSeeder extends Seeder
             ['module' => 'delivery_note', 'prefix' => 'DN/2026/', 'current_number' => 4001, 'padding' => 4],
             ['module' => 'grn', 'prefix' => 'GRN/2026/', 'current_number' => 5001, 'padding' => 4]
         ];
+        foreach ($series as $s) {
+            if (!DB::table('numbering_series')->where('module', $s['module'])->exists()) {
+                DB::table('numbering_series')->insert(
+                    array_merge($s, ['created_at' => now(), 'updated_at' => now()])
+                );
+            }
+        }
         // 6.1 Statutory & Payroll Rules
         $statRules = [
             ['rule_key' => 'PF_EMPLOYEE_RATE', 'rule_name' => 'Provident Fund (Employee)', 'percentage' => 12.00, 'description' => 'Employee PF Deduction Rate (12%)'],

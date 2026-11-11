@@ -25,6 +25,16 @@ class ChatSystemTest extends TestCase
         // Resolve seeded references
         $this->adminUser = User::where('email', 'admin@mserp.com')->first();
         $this->repUser = User::where('email', 'rep.north1@mserp.com')->first();
+        if (!$this->repUser) {
+            $salesRepRoleId = DB::table('roles')->where('slug', 'sales-rep')->value('id');
+            $this->repUser = User::factory()->create([
+                'name' => 'Sales Rep Test',
+                'email' => 'rep.north1@mserp.com',
+                'role_id' => $salesRepRoleId,
+                'company_id' => $this->adminUser->company_id,
+                'branch_id' => $this->adminUser->branch_id,
+            ]);
+        }
 
         // Create a test chat group
         $this->groupId = DB::table('chat_groups')->insertGetId([

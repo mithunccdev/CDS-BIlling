@@ -2,7 +2,11 @@
     const docType = "{{ $pageConfig->slug }}"; // sales-invoices, sales-orders, purchase-orders, purchase-invoices, sales-quotations
     let contactsCache = [];
     let itemsCache = [];
-    const sellerState = "maharashtra"; // Company state
+    const sellerState = @json(
+        strtolower(trim((\Illuminate\Support\Facades\Schema::hasTable('companies') && \Illuminate\Support\Facades\Schema::hasColumn('companies', 'state')
+            ? \Illuminate\Support\Facades\DB::table('companies')->value('state')
+            : null) ?? 'Maharashtra'))
+    );
     let isIntraState = true; 
     let rowCounter = 0;
 

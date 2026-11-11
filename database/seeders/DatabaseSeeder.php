@@ -19,44 +19,43 @@ class DatabaseSeeder extends Seeder
         app(\App\Http\Controllers\DynamicCrudController::class)->ensureBillingTablesExist();
         app(\App\Http\Controllers\EmailController::class)->ensureEmailTablesExist();
 
-        // 1. Companies
-        $acmeId = DB::table('companies')->insertGetId([
-            'name' => 'Acme Corporation (India)',
-            'code' => 'ACME',
-            'logo' => null,
-            'address' => 'Express Towers, Nariman Point, Mumbai, MH 400021',
-            'phone' => '+91 22 5550 1999',
-            'email' => 'finance@acme-india.in',
-            'gstin' => '27AAACA1234A1Z5',
-            'state' => 'Maharashtra',
-            'pan' => 'AAACA1234A',
-            'bank_name' => 'HDFC Bank Ltd',
-            'bank_acc_no' => '50100203495834',
-            'bank_ifsc' => 'HDFC0000060',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // 1. Default Workspace Company (Idempotent)
+        $companyId = DB::table('companies')->where('code', 'MSERP')->value('id')
+            ?? DB::table('companies')->value('id');
+        if (!$companyId) {
+            $companyId = DB::table('companies')->insertGetId([
+                'name' => 'MS ERP',
+                'code' => 'MSERP',
+                'logo' => null,
+                'address' => null,
+                'phone' => null,
+                'email' => null,
+                'gstin' => null,
+                'state' => 'Maharashtra',
+                'pan' => null,
+                'bank_name' => null,
+                'bank_acc_no' => null,
+                'bank_ifsc' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-        // 2. Branches
-        $mumbaiBranchId = DB::table('branches')->insertGetId([
-            'company_id' => $acmeId,
-            'name' => 'Mumbai Head Office',
-            'code' => 'ACME-BOM',
-            'address' => 'Express Towers, Mumbai',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // 2. Default Branch (Idempotent)
+        $headBranchId = DB::table('branches')->where('code', 'HQ')->value('id')
+            ?? DB::table('branches')->where('company_id', $companyId)->value('id');
+        if (!$headBranchId) {
+            $headBranchId = DB::table('branches')->insertGetId([
+                'company_id' => $companyId,
+                'name' => 'Head Office',
+                'code' => 'HQ',
+                'address' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-        $blrBranchId = DB::table('branches')->insertGetId([
-            'company_id' => $acmeId,
-            'name' => 'Bengaluru Tech Branch',
-            'code' => 'ACME-BLR',
-            'address' => 'Brigade Road, Bengaluru, KA',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 3. Departments
+        // 3. Departments (Idempotent)
         $depts = [
             'EXEC' => 'Executive Office',
             'SALES' => 'Sales Department',
@@ -68,16 +67,20 @@ class DatabaseSeeder extends Seeder
         
         $deptIds = [];
         foreach ($depts as $code => $name) {
-            $deptIds[$code] = DB::table('departments')->insertGetId([
-                'branch_id' => $mumbaiBranchId,
-                'name' => $name,
-                'code' => $code,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $deptId = DB::table('departments')->where('code', $code)->value('id');
+            if (!$deptId) {
+                $deptId = DB::table('departments')->insertGetId([
+                    'branch_id' => $headBranchId,
+                    'name' => $name,
+                    'code' => $code,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $deptIds[$code] = $deptId;
         }
 
-        // 4. Roles
+        // 4. Roles (Idempotent)
         $roles = [
             'super-admin' => ['Super Admin', 'Unrestricted system access.'],
             'admin' => ['Admin', 'General administrator credentials.'],
@@ -90,149 +93,40 @@ class DatabaseSeeder extends Seeder
 
         $roleIds = [];
         foreach ($roles as $slug => $info) {
-            $roleIds[$slug] = DB::table('roles')->insertGetId([
-                'name' => $info[0],
-                'slug' => $slug,
-                'description' => $info[1],
+            $roleId = DB::table('roles')->where('slug', $slug)->value('id');
+            if (!$roleId) {
+                $roleId = DB::table('roles')->insertGetId([
+                    'name' => $info[0],
+                    'slug' => $slug,
+                    'description' => $info[1],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $roleIds[$slug] = $roleId;
+        }
+
+        // 5. Primary Administrator Account (Idempotent - no sample users)
+        $password = Hash::make('password');
+        $cfoId = DB::table('users')->where('email', 'admin@mserp.com')->value('id');
+        if (!$cfoId) {
+            $cfoId = DB::table('users')->insertGetId([
+                'name' => 'Super Admin',
+                'email' => 'admin@mserp.com',
+                'password' => $password,
+                'role_id' => $roleIds['super-admin'],
+                'company_id' => $companyId,
+                'branch_id' => $headBranchId,
+                'department_id' => $deptIds['EXEC'],
+                'reports_to_id' => null,
+                'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        // 5. Users with Hierarchical reporting structures (reports_to_id)
-        $password = Hash::make('password');
-
-        // Level 1: CFO (Top Level)
-        $cfoId = DB::table('users')->insertGetId([
-            'name' => 'Michael Chang (CFO)',
-            'email' => 'admin@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['super-admin'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['EXEC'],
-            'reports_to_id' => null,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Level 2: Heads of Departments (Report to CFO)
-        $northSalesHeadId = DB::table('users')->insertGetId([
-            'name' => 'Sarah Jenkins (North Sales Head)',
-            'email' => 'north.head@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['sales-head'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['SALES'],
-            'reports_to_id' => $cfoId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $southSalesHeadId = DB::table('users')->insertGetId([
-            'name' => 'Rajesh Kumar (South Sales Head)',
-            'email' => 'south.head@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['sales-head'],
-            'company_id' => $acmeId,
-            'branch_id' => $blrBranchId,
-            'department_id' => $deptIds['SALES'],
-            'reports_to_id' => $cfoId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $accountsHeadId = DB::table('users')->insertGetId([
-            'name' => 'Ananya Sen (Finance Head)',
-            'email' => 'accounts.head@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['accounts-head'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['ACCTS'],
-            'reports_to_id' => $cfoId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Level 3: Department Members / Reps (Report to Heads)
-        $northRep1Id = DB::table('users')->insertGetId([
-            'name' => 'David Lee (Delhi Representative)',
-            'email' => 'rep.north1@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['sales-rep'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['SALES'],
-            'reports_to_id' => $northSalesHeadId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $northRep2Id = DB::table('users')->insertGetId([
-            'name' => 'Amit Sharma (Noida Representative)',
-            'email' => 'rep.north2@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['sales-rep'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['SALES'],
-            'reports_to_id' => $northSalesHeadId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $southRep1Id = DB::table('users')->insertGetId([
-            'name' => 'Karthik Raja (Bengaluru Rep)',
-            'email' => 'rep.south1@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['sales-rep'],
-            'company_id' => $acmeId,
-            'branch_id' => $blrBranchId,
-            'department_id' => $deptIds['SALES'],
-            'reports_to_id' => $southSalesHeadId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $accountsMemberId = DB::table('users')->insertGetId([
-            'name' => 'Sanjay Dutt (Accounts Assistant)',
-            'email' => 'accounts.member@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['accounts-member'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['ACCTS'],
-            'reports_to_id' => $accountsHeadId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // General staff user
-        $generalStaffId = DB::table('users')->insertGetId([
-            'name' => 'Pooja Hegde (Office Executive)',
-            'email' => 'user@mserp.com',
-            'password' => $password,
-            'role_id' => $roleIds['user'],
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'department_id' => $deptIds['SRV'],
-            'reports_to_id' => $cfoId,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 6. Navigation Modules (Low-Code Sidebar)
+        // 6. Navigation Modules (Low-Code Sidebar - seeded once when pages are missing)
+        if (!DB::table('pages')->where('slug', 'customers')->exists()) {
         $modOrg = DB::table('modules')->insertGetId([
             'name' => 'Organization Panel',
             'icon' => 'bi-building',
@@ -1098,506 +992,31 @@ class DatabaseSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
-
-        // 9. Workflows Seeding (Sales invoices approval workflow)
-        $wfId = DB::table('workflows')->insertGetId([
-            'name' => 'High Value Invoice Approval Chain',
-            'page_id' => $pageInvId,
-            'steps' => json_encode([
-                ['step' => 1, 'role_id' => $roleIds['sales-head'], 'name' => 'Sales Head Review'],
-                ['step' => 2, 'role_id' => $roleIds['accounts-head'], 'name' => 'Finance Head Approval']
-            ]),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 10. Dummy Template Email Accounts (@gmail.com and @mserp.in)
-        // Users can change password and email under Email > Settings
-        $gmailAccData = [
-            'email' => 'demo.user@gmail.com',
-            'display_name' => 'Demo Gmail Account',
-            'smtp_host' => 'smtp.gmail.com',
-            'smtp_port' => 587,
-            'smtp_encryption' => 'tls',
-            'smtp_user' => 'demo.user@gmail.com',
-            'smtp_password' => encrypt('your-app-password-here'),
-            'imap_host' => 'imap.gmail.com',
-            'imap_port' => 993,
-            'imap_encryption' => 'ssl',
-            'imap_user' => 'demo.user@gmail.com',
-            'imap_password' => encrypt('your-app-password-here'),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        $customAccData = [
-            'email' => 'user@mserp.in',
-            'display_name' => 'MS ERP Custom Mail',
-            'smtp_host' => 'mail.mserp.in',
-            'smtp_port' => 587,
-            'smtp_encryption' => 'tls',
-            'smtp_user' => 'user@mserp.in',
-            'smtp_password' => encrypt('your-mail-password-here'),
-            'imap_host' => 'mail.mserp.in',
-            'imap_port' => 993,
-            'imap_encryption' => 'ssl',
-            'imap_user' => 'user@mserp.in',
-            'imap_password' => encrypt('your-mail-password-here'),
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-
-        if (Schema::hasColumn('email_accounts', 'user_id')) {
-            $gmailAccData['user_id'] = $cfoId;
-            $customAccData['user_id'] = $cfoId;
         }
 
-        $emailAccId = DB::table('email_accounts')->insertGetId($gmailAccData);
-        $customAccId = DB::table('email_accounts')->insertGetId($customAccData);
-
-        DB::table('email_account_users')->insert([
-            ['email_account_id' => $emailAccId, 'user_id' => $cfoId, 'created_at' => now(), 'updated_at' => now()],
-            ['email_account_id' => $customAccId, 'user_id' => $cfoId, 'created_at' => now(), 'updated_at' => now()],
-        ]);
-
-        // 11. Email Templates & Signatures
-        DB::table('email_templates')->insert([
-            'user_id' => $cfoId,
-            'name' => 'Invoice Approved Notification',
-            'subject' => 'Sales Invoice #[InvoiceNo] Approved',
-            'body' => '<p>Dear Customer,</p><p>We are pleased to inform you that your Sales Invoice #[InvoiceNo] for the amount of $[Amount] has been fully approved by our accounts department.</p><p>Please find the transaction receipt statement attached.</p><p>Regards,<br>Finance Division</p>',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('email_signatures')->insert([
-            'user_id' => $cfoId,
-            'name' => 'Corporate Executive Sign',
-            'content' => '<strong>Michael Chang</strong><br><span style="color: #64748b; font-size: 0.8rem;">Chief Financial Officer | MS ERP Group</span><br><span style="color: #64748b; font-size: 0.8rem;">Phone: +91 22 5550 1999</span>',
-            'is_default' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 12. Address Book Contacts Seeding
-        $contact1Id = DB::table('email_contacts')->insertGetId([
-            'user_id' => $cfoId,
-            'name' => 'Sophia Martinez',
-            'email' => 'sophia.martinez@mserp-client.com',
-            'phone' => '+91 98200 12345',
-            'company' => 'Martinez Ventures',
-            'notes' => 'Acme corporate account coordinator.',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 13. Sample Business Data (Seeded with India-focused fields and ownership assignments)
-        // Customer 1: Owned by North Rep 1 (David). Visible to David and Sales Head (Sarah).
-        $cust1Id = DB::table('customers')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'assigned_user_id' => $northRep1Id,
-            'is_restricted_subordinates' => false,
-            'gstin' => '27AAAAA1111A1Z1',
-            'pan' => 'AAAAA1111A',
-            'state' => 'Maharashtra',
-            'city' => 'Mumbai',
-            'business_type' => 'Private Limited',
-            'name' => 'Reliance Retail Outlets',
-            'email' => 'billing@rel-retail.in',
-            'phone' => '+91 22 4567 8901',
-            'address' => 'Reliance Corporate Park, Navi Mumbai, MH',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Customer 2: Owned by North Rep 2 (Amit). Visible to Amit and Sales Head (Sarah).
-        $cust2Id = DB::table('customers')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'assigned_user_id' => $northRep2Id,
-            'is_restricted_subordinates' => false,
-            'gstin' => '09BBBBB2222B1Z2',
-            'pan' => 'BBBBB2222B',
-            'state' => 'Uttar Pradesh',
-            'city' => 'Noida',
-            'business_type' => 'Private Limited',
-            'name' => 'HCL Technologies Ltd',
-            'email' => 'invoices@hcl.in',
-            'phone' => '+91 120 456 7890',
-            'address' => 'Sector 3, Noida, UP',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Customer 3: Owned by South Rep 1 (Karthik). Visible to Karthik and South Sales Head (Rajesh).
-        $cust3Id = DB::table('customers')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $blrBranchId,
-            'assigned_user_id' => $southRep1Id,
-            'is_restricted_subordinates' => false,
-            'gstin' => '29CCCCC3333C1Z3',
-            'pan' => 'CCCCC3333C',
-            'state' => 'Karnataka',
-            'city' => 'Bengaluru',
-            'business_type' => 'Public Limited',
-            'name' => 'Infosys Technologies',
-            'email' => 'billing@infosys.com',
-            'phone' => '+91 80 2852 0261',
-            'address' => 'Electronic City, Bengaluru, KA',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Customer 4: Owned by North Sales Head (Sarah) directly, AND set to Restricted visibility.
-        // Sarah can see it, but David (her subordinate rep) CANNOT see it because is_restricted_subordinates = true!
-        $cust4Id = DB::table('customers')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'assigned_user_id' => $northSalesHeadId,
-            'is_restricted_subordinates' => true, // Hidden from David and Amit!
-            'gstin' => '27DDDDD4444D1Z4',
-            'pan' => 'DDDDD4444D',
-            'state' => 'Maharashtra',
-            'city' => 'Pune',
-            'business_type' => 'Sole Proprietorship',
-            'name' => 'Tata Consultancy Services',
-            'email' => 'accounts@tcs.co.in',
-            'phone' => '+91 20 6608 6000',
-            'address' => 'Hinjewadi Phase 3, Pune, MH',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Customer 5: Owned by CFO (Michael Chang) directly, and restricted.
-        $cust5Id = DB::table('customers')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'assigned_user_id' => $cfoId,
-            'is_restricted_subordinates' => true,
-            'gstin' => '33EEEEE5555E1Z5',
-            'pan' => 'EEEEE5555E',
-            'state' => 'Tamil Nadu',
-            'city' => 'Chennai',
-            'business_type' => 'Partnership',
-            'name' => 'MRF Tyres Corporation',
-            'email' => 'mrf@mrf-india.in',
-            'phone' => '+91 44 2829 2777',
-            'address' => 'Greams Road, Chennai, TN',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Sales Invoices
-        $inv1Id = DB::table('sales_invoices')->insertGetId([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'invoice_no' => 'INV-2026-001',
-            'customer_id' => $cust1Id,
-            'invoice_date' => '2026-06-01',
-            'due_date' => '2026-07-01',
-            'amount' => 450000.00,
-            'tax' => 50000.00,
-            'discount' => 0.00,
-            'total_amount' => 500000.00,
-            'status' => 'Pending Approval', // workflow trigger
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('sales_invoices')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'invoice_no' => 'INV-2026-002',
-            'customer_id' => $cust2Id,
-            'invoice_date' => '2026-06-03',
-            'due_date' => '2026-07-03',
-            'amount' => 120000.00,
-            'tax' => 12000.00,
-            'discount' => 5000.00,
-            'total_amount' => 127000.00,
-            'status' => 'Paid',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('sales_invoices')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $blrBranchId,
-            'invoice_no' => 'INV-2026-003',
-            'customer_id' => $cust3Id,
-            'invoice_date' => '2026-06-05',
-            'due_date' => '2026-07-05',
-            'amount' => 800000.00,
-            'tax' => 160000.00,
-            'discount' => 40000.00,
-            'total_amount' => 920000.00,
-            'status' => 'Approved',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Inventory Items
-        DB::table('inventory_items')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'item_code' => 'ITM001',
-            'hsn_sac' => '84713010',
-            'tax_rate' => 18.00,
-            'name' => 'Mechanical Wireless Keyboard',
-            'category' => 'Hardware Assets',
-            'qty_on_hand' => 150,
-            'unit_price' => 850.00,
-            'reorder_level' => 15,
-            'status' => 'In Stock',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('inventory_items')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'item_code' => 'ITM002',
-            'hsn_sac' => '84716060',
-            'tax_rate' => 18.00,
-            'name' => 'Wireless Ergonomic Mouse',
-            'category' => 'Hardware Assets',
-            'qty_on_hand' => 5,
-            'unit_price' => 450.00,
-            'reorder_level' => 10,
-            'status' => 'Low Stock',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 13.5 Missing Masters Seeding
-        // Vendors
-        DB::table('vendors')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'name' => 'Tata Steel Ltd',
-            'code' => 'VND001',
-            'email' => 'sales@tatasteel.com',
-            'phone' => '+91 22 6665 8282',
-            'address' => 'Jamshedpur, Jharkhand',
-            'gstin' => '20AAAAA1111A1Z1',
-            'pan' => 'AAAAA1111A',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('vendors')->insert([
-            'company_id' => $acmeId,
-            'branch_id' => $mumbaiBranchId,
-            'name' => 'Larsen & Toubro',
-            'code' => 'VND002',
-            'email' => 'info@larsentoubro.com',
-            'phone' => '+91 22 6705 9000',
-            'address' => 'L&T House, Ballard Estate, Mumbai',
-            'gstin' => '27BBBBB2222B1Z2',
-            'pan' => 'BBBBB2222B',
-            'status' => 'Active',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Tax Masters
-        DB::table('tax_masters')->insert([
-            'name' => 'GST 5%',
-            'code' => 'GST-5',
-            'rate' => 5.00,
-            'cgst_rate' => 2.50,
-            'sgst_rate' => 2.50,
-            'igst_rate' => 5.00,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('tax_masters')->insert([
-            'name' => 'GST 12%',
-            'code' => 'GST-12',
-            'rate' => 12.00,
-            'cgst_rate' => 6.00,
-            'sgst_rate' => 6.00,
-            'igst_rate' => 12.00,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('tax_masters')->insert([
-            'name' => 'GST 18%',
-            'code' => 'GST-18',
-            'rate' => 18.00,
-            'cgst_rate' => 9.00,
-            'sgst_rate' => 9.00,
-            'igst_rate' => 18.00,
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // UOMs
-        DB::table('uoms')->insert([
-            'name' => 'Pieces',
-            'code' => 'PCS',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('uoms')->insert([
-            'name' => 'Kilograms',
-            'code' => 'KGS',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Cost Centers
-        DB::table('cost_centers')->insert([
-            'company_id' => $acmeId,
-            'name' => 'Mumbai Cost Center',
-            'code' => 'CC-MUM',
-            'description' => 'Cost center for Mumbai Operations',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        DB::table('cost_centers')->insert([
-            'company_id' => $acmeId,
-            'name' => 'Bengaluru Tech Center',
-            'code' => 'CC-BLR',
-            'description' => 'Cost center for Bangalore Tech operations',
-            'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // 14. Trigger Workflow Instance for INV-2026-001 (assigned to Sales Head Sarah Jenkins review)
-        $wiId = DB::table('workflow_instances')->insertGetId([
-            'workflow_id' => $wfId,
-            'table_name' => 'sales_invoices',
-            'record_id' => $inv1Id,
-            'current_step' => 1,
-            'status' => 'PENDING',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // Audit log creation for INV-2026-001
-        DB::table('audit_logs')->insert([
-            'user_id' => $northRep1Id, // created by David
-            'action' => 'CREATE',
-            'table_name' => 'sales_invoices',
-            'record_id' => $inv1Id,
-            'new_values' => json_encode(['invoice_no' => 'INV-2026-001', 'total_amount' => 500000.00, 'status' => 'Pending Approval']),
-            'ip_address' => '192.168.1.100',
-            'user_agent' => 'Mozilla/5.0 Chrome/122.0.0.0',
-            'created_at' => now()->subHours(2),
-        ]);
-
-        // Set up notification for Sales Head (Sarah)
-        DB::table('notifications')->insert([
-            'user_id' => $northSalesHeadId,
-            'title' => 'Workflow Approval Required',
-            'message' => "A new record in 'Sales Invoices' requires your approval.",
-            'type' => 'WORKFLOW',
-            'is_read' => false,
-            'created_at' => now()->subHours(2),
-        ]);
-
-        // 15. Pre-Sync simulated emails to test Inbox out of the box
-        $thread1Id = (string) Str::uuid();
-        
-        $email1Data = [
-            'email_account_id' => $emailAccId,
-            'message_id' => '<' . time() . '.1@mserp-client.com>',
-            'thread_id' => $thread1Id,
-            'from_address' => 'sophia.martinez@mserp-client.com',
-            'from_name' => 'Sophia Martinez (Sales Director)',
-            'to_address' => 'admin@mserp.com',
-            'subject' => 'URGENT: Request for Sales Invoice Revision - #INV-2026-004',
-            'date_sent' => now()->subHours(5),
-            'folder' => 'INBOX',
-            'is_read' => false,
-            'is_starred' => true,
-            'has_attachments' => false,
-            'created_at' => now()->subHours(5),
-            'updated_at' => now()->subHours(5),
+        // 9. Reference Tax Masters (Idempotent - no sample business transactions)
+        $taxMasters = [
+            ['code' => 'GST-5', 'name' => 'GST 5%', 'rate' => 5.00, 'cgst_rate' => 2.50, 'sgst_rate' => 2.50, 'igst_rate' => 5.00],
+            ['code' => 'GST-12', 'name' => 'GST 12%', 'rate' => 12.00, 'cgst_rate' => 6.00, 'sgst_rate' => 6.00, 'igst_rate' => 12.00],
+            ['code' => 'GST-18', 'name' => 'GST 18%', 'rate' => 18.00, 'cgst_rate' => 9.00, 'sgst_rate' => 9.00, 'igst_rate' => 18.00],
         ];
+        foreach ($taxMasters as $tax) {
+            DB::table('tax_masters')->updateOrInsert(
+                ['code' => $tax['code']],
+                array_merge($tax, ['is_active' => true, 'created_at' => now(), 'updated_at' => now()])
+            );
+        }
 
-        $email2Data = [
-            'email_account_id' => $emailAccId,
-            'message_id' => '<' . time() . '.2@mserp-client.com>',
-            'thread_id' => $thread1Id,
-            'from_address' => 'admin@mserp.com',
-            'from_name' => 'Michael Chang (CFO)',
-            'to_address' => 'sophia.martinez@mserp-client.com',
-            'subject' => 'RE: URGENT: Request for Sales Invoice Revision - #INV-2026-004',
-            'date_sent' => now()->subHours(4),
-            'folder' => 'SENT',
-            'is_read' => true,
-            'is_starred' => false,
-            'has_attachments' => false,
-            'created_at' => now()->subHours(4),
-            'updated_at' => now()->subHours(4),
+        // 10. Reference UOMs (Idempotent)
+        $uoms = [
+            ['code' => 'PCS', 'name' => 'Pieces'],
+            ['code' => 'KGS', 'name' => 'Kilograms'],
         ];
-
-        $body1Html = '<p>Hi Team,</p><p>We received the invoice #INV-2026-004 for the Q2 licenses, but noticed the discount code for 10% was not applied. Could you please correct the amount and send over an updated PDF?</p><p>Best regards,<br>Sophia Martinez</p>';
-        $body1Text = "Hi Team,\n\nWe received the invoice #INV-2026-004 for the Q2 licenses, but noticed the discount code for 10% was not applied. Could you please correct the amount and send over an updated PDF?\n\nBest regards,\nSophia Martinez";
-
-        $body2Html = '<p>Hi Sophia,</p><p>Thanks for raising this. I am looking into our discount logs and will direct the sales billing desk to compile a corrected invoice INV-2026-004-REV. Expect it shortly.</p><p>Regards,<br>Michael</p>';
-        $body2Text = "Hi Sophia,\n\nThanks for raising this. I am looking into our discount logs and will direct the sales billing desk to compile a corrected invoice INV-2026-004-REV. Expect it shortly.\n\nRegards,\nMichael";
-
-        if (Schema::hasColumn('emails', 'body_html')) {
-            $email1Data['body_html'] = $body1Html;
-            $email1Data['body_text'] = $body1Text;
-            DB::table('emails')->insert($email1Data);
-
-            $email2Data['body_html'] = $body2Html;
-            $email2Data['body_text'] = $body2Text;
-            DB::table('emails')->insert($email2Data);
-        } else {
-            // Ensure email_bodies exists
-            if (!Schema::hasTable('email_bodies')) {
-                Schema::create('email_bodies', function ($table) {
-                    $table->id();
-                    $table->unsignedBigInteger('email_id')->unique()->index();
-                    $table->longText('body_html')->nullable();
-                    $table->longText('body_text')->nullable();
-                    $table->timestamps();
-                });
-            }
-            
-            $email1Id = DB::table('emails')->insertGetId($email1Data);
-            DB::table('email_bodies')->insert([
-                'email_id' => $email1Id,
-                'body_html' => $body1Html,
-                'body_text' => $body1Text,
-                'created_at' => now()->subHours(5),
-                'updated_at' => now()->subHours(5),
-            ]);
-
-            $email2Id = DB::table('emails')->insertGetId($email2Data);
-            DB::table('email_bodies')->insert([
-                'email_id' => $email2Id,
-                'body_html' => $body2Html,
-                'body_text' => $body2Text,
-                'created_at' => now()->subHours(4),
-                'updated_at' => now()->subHours(4),
-            ]);
+        foreach ($uoms as $uom) {
+            DB::table('uoms')->updateOrInsert(
+                ['code' => $uom['code']],
+                array_merge($uom, ['is_active' => true, 'created_at' => now(), 'updated_at' => now()])
+            );
         }
 
         $this->call(ComprehensiveErpSeeder::class);

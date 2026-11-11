@@ -169,7 +169,7 @@
                     <img src="{{ asset('images/favicon.png') }}" alt="MS ERP Logo" style="height: 38px; width: 38px; object-fit: contain; border-radius: 8px;">
                     <h4 class="fw-extrabold m-0 text-dark">Welcome to MS ERP</h4>
                 </div>
-                <p class="text-muted small">Sign in with your credentials or click any demo role below to jump right in.</p>
+                <p class="text-muted small">Sign in with your workspace credentials to access the ERP system.</p>
             </div>
 
             @if ($errors->any())
@@ -182,13 +182,13 @@
                 </div>
             @endif
 
-            <form method="POST" action="/login" id="login-form" class="mb-4">
+            <form method="POST" action="/login" id="login-form" class="mb-2">
                 @csrf
                 <div class="mb-3">
                     <label for="email" class="form-label small fw-bold text-secondary">Email Address</label>
                     <div class="input-group">
                         <span class="input-group-text bg-light border-end-0 rounded-start-3"><i class="bi bi-envelope text-muted"></i></span>
-                        <input type="email" class="form-control border-start-0" id="email" name="email" required placeholder="name@mserp.com">
+                        <input type="email" class="form-control border-start-0" id="email" name="email" required placeholder="name@company.com">
                     </div>
                 </div>
 
@@ -204,87 +204,9 @@
                     <i class="bi bi-box-arrow-in-right me-2"></i> Sign In to Workspace
                 </button>
             </form>
-
-            <!-- 1-Click Child-Simple Quick Logins -->
-            <div class="border-top pt-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="fw-bold extra-small text-uppercase text-secondary tracking-wider">⚡ 1-Click Quick Demo Sign In</span>
-                    <span class="badge bg-light text-dark extra-small border">Password: password</span>
-                </div>
-
-                <div class="row g-2">
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('admin@mserp.com', 'password')">
-                            <div class="role-icon-box bg-primary text-white"><i class="bi bi-shield-check"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">CFO / Super Admin</div>
-                                <div class="text-muted extra-small">Unrestricted System Control</div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('north.head@mserp.com', 'password')">
-                            <div class="role-icon-box bg-success text-white"><i class="bi bi-graph-up-arrow"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">North Sales Head</div>
-                                <div class="text-muted extra-small">Sales Department Supervisor</div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('accounts.head@mserp.com', 'password')">
-                            <div class="role-icon-box bg-warning text-dark"><i class="bi bi-bank"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">Finance Head</div>
-                                <div class="text-muted extra-small">Accounts Ledger Manager</div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('rep.north1@mserp.com', 'password')">
-                            <div class="role-icon-box bg-info text-white"><i class="bi bi-person-badge"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">Sales Executive</div>
-                                <div class="text-muted extra-small">Delhi Territory Officer</div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('accounts.member@mserp.com', 'password')">
-                            <div class="role-icon-box bg-purple text-white" style="background:#8b5cf6;"><i class="bi bi-receipt"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">Accounts Assistant</div>
-                                <div class="text-muted extra-small">Billing & Audit Entry</div>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <button type="button" class="role-card" onclick="fillAndSubmit('user@mserp.com', 'password')">
-                            <div class="role-icon-box bg-secondary text-white"><i class="bi bi-person"></i></div>
-                            <div>
-                                <div class="fw-bold small text-dark">General Executive</div>
-                                <div class="text-muted extra-small">Read-only Workspace</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
-
-<script>
-    function fillAndSubmit(email, password) {
-        document.getElementById('email').value = email;
-        document.getElementById('password').value = password;
-        document.getElementById('login-form').submit();
-    }
-</script>
 
 </body>
 </html>

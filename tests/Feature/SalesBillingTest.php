@@ -62,7 +62,18 @@ class SalesBillingTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->vendorId = DB::table('vendors')->first()->id;
+        $this->vendorId = DB::table('vendors')->first()?->id ?? DB::table('vendors')->insertGetId([
+            'company_id' => $this->companyId,
+            'branch_id' => $this->branchId,
+            'name' => 'Test Vendor Supplies',
+            'code' => 'VND-TEST-01',
+            'email' => 'vendor@test.local',
+            'state' => 'Maharashtra',
+            'gstin' => '27VVVVV1111V1Z1',
+            'status' => 'Active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
         DB::table('vendors')->where('id', $this->vendorId)->update([
             'state' => 'Maharashtra'
         ]);

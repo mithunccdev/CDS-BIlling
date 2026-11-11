@@ -22,11 +22,48 @@ class ErpCacheService
     public static function rememberSafe(string $key, int $ttlSeconds, Closure $callback)
     {
         try {
-            return Cache::remember($key, $ttlSeconds, $callback);
+            $value = Cache::remember($key, $ttlSeconds, $callback);
+
+            if (self::containsIncompleteClass($value)) {
+                Cache::forget($key);
+                $fresh = $callback();
+                if (!self::containsIncompleteClass($fresh)) {
+                    Cache::put($key, $fresh, $ttlSeconds);
+                }
+                return $fresh;
+            }
+
+            return $value;
         } catch (Throwable $e) {
             Log::warning("ErpCacheService: Cache lookup failed for key '{$key}': " . $e->getMessage());
             return $callback();
         }
+    }
+
+    /**
+     * Detect whether a cached payload deserialized into __PHP_Incomplete_Class.
+     */
+    private static function containsIncompleteClass(mixed $value): bool
+    {
+        if ($value instanceof \__PHP_Incomplete_Class) {
+            return true;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (self::containsIncompleteClass($item)) {
+                    return true;
+                }
+            }
+        } elseif (is_object($value)) {
+            foreach (get_object_vars($value) as $prop) {
+                if (self::containsIncompleteClass($prop)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
