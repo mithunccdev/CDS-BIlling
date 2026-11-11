@@ -274,3 +274,4 @@ return new class extends Migration
         // Cleanup migration is non-reversible.
     }
 };
+
